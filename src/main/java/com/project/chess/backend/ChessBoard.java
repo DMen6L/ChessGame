@@ -2,11 +2,15 @@ package com.project.chess.backend;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ChessBoard {
     // Board uses 0-indexed rows and columns.
     // row 0 is the top (Black's back rank) and row 7 is the bottom (White's back rank)
     private ChessPiece[][] board;
+
+    // Checks the three move repetition rule
+    private List<String> threeMoverCheck;
 
     // Castling rights flags
     private boolean whiteKingMoved, whiteKingRookMoved, whiteQueenRookMoved;
@@ -17,6 +21,7 @@ public class ChessBoard {
     private int enPassantTargetRow = -1, enPassantTargetCol = -1;
 
     public ChessBoard() {
+        threeMoverCheck = new ArrayList<>();
         board = new ChessPiece[8][8];
         setupBoard();
     }
@@ -458,5 +463,58 @@ public class ChessBoard {
         }
 
         // (If not simulating, the new state persists.)
+    }
+
+    public boolean isCheckmate(Color turn) {
+        return isKingInCheck(turn) && !checkForMoves(turn);
+    }
+
+    public boolean isStalemate(Color turn) {
+        // If there are no legal moves
+        if(!checkForMoves(turn)) return true;
+        // If three repetition moves
+        if(turn == Color.BLACK) {
+            if(this.threeMoverCheck.size() == 5) {
+                if(Objects.equals(this.threeMoverCheck.get(0), this.threeMoverCheck.get(2))
+                        && Objects.equals(this.threeMoverCheck.get(2), this.threeMoverCheck.get(4))
+                        && Objects.equals(this.threeMoverCheck.get(1), this.threeMoverCheck.get(3))) return true;
+                this.threeMoverCheck.remove(0);
+            }
+            this.threeMoverCheck.add(getBoardState());
+        }
+
+        return false;
+    }
+
+    private boolean checkForMoves(Color turn) {
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                ChessPiece piece = board[i][j];
+                if (piece != null && piece.getColor() == turn) {
+                    List<int[]> legalMoves = getLegalMoves(i, j);
+                    if (!legalMoves.isEmpty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private String getBoardState() {
+        StringBuilder boardState = new StringBuilder();
+        for(int i = 0; i < 8; i++) {
+            for(int j = 0; j < 8; j++) {
+                if(this.board[i][j] != null) {
+                    boardState.append(this.board[i][j].toString());
+                } else {
+                    boardState.append(" ");
+                }
+            }
+            boardState.append("\n");
+        }
+
+        return boardState.toString();
     }
 }

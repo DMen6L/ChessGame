@@ -85,6 +85,13 @@ public class ChessUIController {
             boardInit();
 
             this.turn = this.turn == Color.WHITE ? Color.BLACK : Color.WHITE;
+
+            if(this.board.isCheckmate(this.turn)) {
+                System.out.println("Checkmate!");
+            }
+            if(this.board.isStalemate(this.turn)) {
+                System.out.println("Stalemate!");
+            }
         }
     }
 
