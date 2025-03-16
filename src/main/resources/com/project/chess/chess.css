@@ -1,0 +1,5 @@
+.moveButton {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent; /* Removes border */
+    -fx-focus-traversable: false; /* Disables focus border */
+}

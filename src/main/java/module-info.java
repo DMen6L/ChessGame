@@ -11,6 +11,7 @@ module com.project.chess {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires javafx.graphics;
+    requires java.desktop;
 
     opens com.project.chess to javafx.fxml;
     exports com.project.chess;
