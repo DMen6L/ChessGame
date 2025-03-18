@@ -1,0 +1,25 @@
+.stalemate, .restartButton {
+    -fx-background-color: #86888a;
+}
+
+.stalemate {
+    -fx-font-size: 30px;
+}
+
+.stalemateReason {
+    -fx-font-size: 20px;
+}
+
+.stalemate, .stalemateReason, .restartButton {
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.restartText {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+}
+
+.restartButton {
+    -fx-font-size: 20px;
+}

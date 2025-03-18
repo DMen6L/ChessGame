@@ -1,5 +1,20 @@
-.moveButton {
+.moveButton, .pieceButton {
     -fx-background-color: transparent;
     -fx-border-color: transparent; /* Removes border */
     -fx-focus-traversable: false; /* Disables focus border */
+}
+
+.clock {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+
+    -fx-padding: 2px;
+
+    -fx-border-style: solid;
+    -fx-border-color: black;
+    -fx-border-width: 3px;
+    -fx-border-radius: 10px;
+
+    -fx-background-color: grey;
+    -fx-background-radius: 10px;
 }

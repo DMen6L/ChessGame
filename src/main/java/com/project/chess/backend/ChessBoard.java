@@ -300,6 +300,7 @@ public class ChessBoard {
     private boolean canAttackSquare(int sRow, int sCol, int tRow, int tCol) {
         ChessPiece piece = getPiece(sRow, sCol);
         if (piece == null) return false;
+        if(sRow == tRow && sCol == tCol) return false;
         Color color = piece.getColor();
         int pawnDir = (color == Color.WHITE) ? -1 : 1;
         switch(piece.getType()){

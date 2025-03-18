@@ -1,9 +1,7 @@
 package com.project.chess;
 
-import com.project.chess.backend.ChessBoard;
-import com.project.chess.backend.ChessPiece;
-import com.project.chess.backend.Color;
-import com.project.chess.backend.PieceType;
+import com.project.chess.backend.*;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -13,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -21,11 +20,26 @@ public class ChessUIController {
     @FXML
     private GridPane chessBoard;
 
+    @FXML
+    private Label whiteClock;
+    @FXML
+    private Label blackClock;
+
+    private ChessClock whiteClockController;
+    private ChessClock blackClockController;
+
     private final ChessBoard board = new ChessBoard();
     private Color turn = Color.WHITE;
 
+    HelloApplication application = new HelloApplication();
+
     public void initialize() {
-        boardInit();
+        Platform.runLater(this::boardInit);
+
+        this.whiteClockController = new ChessClock(0, 5, 0, whiteClock);
+        this.blackClockController = new ChessClock(0, 5, 0, blackClock);
+
+        this.whiteClockController.start();
     }
 
     private void boardInit() {
@@ -43,11 +57,19 @@ public class ChessUIController {
                     piece.setFitWidth(pieceSize);
                     piece.setPreserveRatio(true);
 
+                    Button pieceButton = new Button();
+                    pieceButton.setGraphic(piece);
+                    pieceButton.setMinWidth(pieceSize);
+                    pieceButton.setMinHeight(pieceSize);
+                    pieceButton.setMaxWidth(pieceSize);
+                    pieceButton.setMaxHeight(pieceSize);
+                    pieceButton.getStyleClass().add("pieceButton");
+
                     int finalJ = j;
                     int finalI = i;
-                    piece.setOnMouseClicked(event -> choosePiece(finalI, finalJ));
+                    pieceButton.setOnMouseClicked(event -> choosePiece(finalI, finalJ));
 
-                    this.chessBoard.add(piece, j, i);
+                    this.chessBoard.add(pieceButton, j, i);
                 }
             }
         }
@@ -62,7 +84,9 @@ public class ChessUIController {
         List<Node> moveIndicatorsToRemove = new ArrayList<>();
         for(Node node : this.chessBoard.getChildren()) {
             if(node instanceof Button) {
-                moveIndicatorsToRemove.add(node);
+                for(String c : node.getStyleClass()) {
+                    if(c.equals("moveButton")) moveIndicatorsToRemove.add(node);
+                }
             }
         }
         this.chessBoard.getChildren().removeAll(moveIndicatorsToRemove);
@@ -74,6 +98,7 @@ public class ChessUIController {
 
         for(int[] move : legalMoves) {
             Circle moveIndicaton = new Circle(move[0], move[1], pieceSize / 7);
+            // Different move indication depending on if a piece can take or cannot
             if(this.board.getPiece(move[0], move[1]) == null) {
                 moveIndicaton.setFill(javafx.scene.paint.Color.rgb(49, 51, 53, 0.5));
             } else {
@@ -106,11 +131,29 @@ public class ChessUIController {
 
             this.turn = this.turn == Color.WHITE ? Color.BLACK : Color.WHITE;
 
-            if(this.board.isCheckmate(this.turn)) {
-                System.out.println("Checkmate!");
+            if(this.turn == Color.BLACK) {
+                this.whiteClockController.stop();
+                this.blackClockController.start();
+            } else {
+                this.blackClockController.stop();
+                this.whiteClockController.start();
             }
-             else if(this.board.isStalemate(this.turn)) {
-                System.out.println("Stalemate!");
+
+            try {
+                if(this.board.isCheckmate(this.turn)) {
+                    String winner = this.turn == Color.WHITE ? "Black" : "White";
+
+                    this.application.endingCheckmateThread(winner);
+                    this.blackClockController.stop();
+                    this.whiteClockController.stop();
+                }
+                else if(this.board.isStalemate(this.turn)) {
+                    this.application.endingStalemateThread();
+                    this.blackClockController.stop();
+                    this.whiteClockController.stop();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -136,7 +179,7 @@ public class ChessUIController {
     private void clearGrid() {
         List<Node> piecesToRemove = new ArrayList<>();
         for(Node node : this.chessBoard.getChildren()) {
-            if(node instanceof ImageView || node instanceof Button) {
+            if(node instanceof Button) {
                 piecesToRemove.add(node);
             }
         }
