@@ -11,14 +11,24 @@ import java.io.IOException;
 
 public class HelloApplication extends Application {
     private Stage currStage;
+    private Parent chess;
 
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("chess.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 600, 600);
-        stage.setTitle("Chess game!");
-        stage.setScene(scene);
+        // Loading starting stage
+        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
+        Parent root = fxmlLoader.load();
+        HelloController controller = fxmlLoader.getController();
 
+        FXMLLoader chessLoader = new FXMLLoader(HelloApplication.class.getResource("chess.fxml"));
+        this.chess = chessLoader.load();
+        ChessUIController chessUIController = chessLoader.getController();
+
+        controller.setController(chessUIController, this);
+
+        // Starting the starting stage
+        stage.setTitle("Connection...");
+        stage.setScene(new Scene(root));
         currStage = stage;
 
         stage.show();
@@ -49,6 +59,12 @@ public class HelloApplication extends Application {
             endingStage.initOwner(currStage);
             endingStage.showAndWait();
         });
+    }
+
+    public void startChess() {
+        currStage.setTitle("Chess");
+        currStage.setScene(new Scene(this.chess));
+        currStage.show();
     }
 
     public static void main(String[] args) {

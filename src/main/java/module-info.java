@@ -12,9 +12,13 @@ module com.project.chess {
     requires com.almasb.fxgl.all;
     requires javafx.graphics;
     requires java.desktop;
+    requires com.google.gson;
+    requires static lombok;
 
     opens com.project.chess to javafx.fxml;
+    opens SocketServer to com.google.gson;
     exports com.project.chess;
     exports com.project.chess.backend;
     opens com.project.chess.backend to javafx.fxml;
+    exports SocketServer to com.google.gson;
 }

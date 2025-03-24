@@ -102,17 +102,27 @@
       </GridPane>
    </center>
    <bottom>
-      <HBox alignment="CENTER_LEFT" mouseTransparent="true" prefHeight="30.0" prefWidth="600.0" BorderPane.alignment="BOTTOM_CENTER">
+      <HBox alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="600.0" BorderPane.alignment="BOTTOM_CENTER">
          <children>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <Label text="User 1" />
+                  <Label fx:id="playerName" text="User 1" />
                </children>
             </HBox>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                <children>
                   <Label fx:id="whiteClock" styleClass="clock" text="clock" />
-                  <Button mnemonicParsing="false" text="resign" />
+                  <Button fx:id="resignButton" mnemonicParsing="false" text="resign" />
+                  <Button mnemonicParsing="false" onAction="#onStalemate" text="Stalemate" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" prefHeight="40.0" prefWidth="178.0" spacing="10.0">
+               <padding>
+                  <Insets left="10.0" />
+               </padding>
+               <children>
+                  <Button fx:id="allowButton" disable="true" mnemonicParsing="false" onAction="#onAllow" styleClass="allow" text="yes" />
+                  <Button fx:id="cancelButton" disable="true" mnemonicParsing="false" onAction="#onCancel" styleClass="cancel" text="no" />
                </children>
             </HBox>
          </children>
@@ -126,13 +136,14 @@
          <children>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
                <children>
-                  <Label text="User 2" />
+                  <Label fx:id="opponentName" text="User 2" />
                </children>
             </HBox>
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
                <children>
                   <Label fx:id="blackClock" styleClass="clock" text="clock" />
-                  <Button mnemonicParsing="false" text="resign" />
+                  <Button mnemonicParsing="false" text="Button" visible="false" />
+                  <Button mnemonicParsing="false" text="Button" visible="false" />
                </children>
             </HBox>
          </children>

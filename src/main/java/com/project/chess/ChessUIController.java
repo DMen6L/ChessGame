@@ -1,7 +1,9 @@
 package com.project.chess;
 
+import SocketServer.Client;
 import com.project.chess.backend.*;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -10,6 +12,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.shape.Circle;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,6 +27,14 @@ public class ChessUIController {
     private Label whiteClock;
     @FXML
     private Label blackClock;
+    @FXML
+    private Label playerName;
+    @FXML
+    private Button resignButton;
+    @FXML
+    private Button allowButton;
+    @FXML
+    private Button cancelButton;
 
     private ChessClock whiteClockController;
     private ChessClock blackClockController;
@@ -32,22 +43,47 @@ public class ChessUIController {
     private Color turn = Color.WHITE;
 
     HelloApplication application = new HelloApplication();
+    @Setter
+    Client client;
 
     public void initialize() {
         Platform.runLater(this::boardInit);
+    }
 
-        this.whiteClockController = new ChessClock(0, 5, 0, whiteClock);
-        this.blackClockController = new ChessClock(0, 5, 0, blackClock);
+    // On resign buttons
+    @FXML
+    public void onResignWhite() throws IOException {
+        this.application.endingCheckmateThread("Black");
+    }
+    @FXML
+    public void onResignBlack() throws IOException {
+        this.application.endingCheckmateThread("White");
+    }
+    @FXML
+    public void onStalemate() {
+        this.client.sendStalemateRequest();
 
-        this.whiteClockController.start();
+        this.allowButton.setDisable(false);
+        this.cancelButton.setDisable(false);
+    }
+    @FXML
+    public void onAllow() throws IOException {
+        this.application.endingStalemateThread();
+        this.allowButton.setDisable(true);
+        this.cancelButton.setDisable(true);
+    }
+    @FXML
+    public void onCancel() {
+        this.allowButton.setDisable(true);
+        this.cancelButton.setDisable(true);
     }
 
     private void boardInit() {
         double pieceSize = chessBoard.getWidth() / 8;
 
         for(int i = 0; i < 8; i++) {
-            for(int j = 0; j < 8; j++) {
-                if(this.board.getPiece(i, j) != null) {
+            for (int j = 0; j < 8; j++) {
+                if (this.board.getPiece(i, j) != null) {
                     ChessPiece p = this.board.getPiece(i, j);
                     String pathToPiece = getPieceImage(p.getType(), p.getColor());
 
@@ -75,10 +111,9 @@ public class ChessUIController {
         }
     }
 
+    // Needed to choose piece, as a button
     private void choosePiece(int row, int col) {
-        if(this.board.getPiece(row, col).getColor() != this.turn) {
-            return ;
-        }
+        if(this.client.getUserColor() != this.turn) return ;
 
         // clearing possible moves
         List<Node> moveIndicatorsToRemove = new ArrayList<>();
@@ -123,8 +158,14 @@ public class ChessUIController {
         }
     }
 
+    // When moveButton is pressed the piece moves to the indicated square
     private void makePieceMove(int sRow, int sCol, int eRow, int eCol) {
         if(this.board.movePiece(sRow, sCol, eRow, eCol, this.turn)) {
+            if(this.turn == this.client.getUserColor()) {
+                String move = sRow + "," + sCol + "->" + eRow + "," + eCol;
+                this.client.sendMove(move);
+            }
+
             // Clearing previous board and creating new one
             clearGrid();
             boardInit();
@@ -158,24 +199,7 @@ public class ChessUIController {
         }
     }
 
-    private Node getGridCell(int row, int col) {
-        for(Node node : this.chessBoard.getChildren()) {
-            if(node instanceof Label) {
-                Integer nodeRow = GridPane.getRowIndex(node);
-                Integer nodeCol = GridPane.getColumnIndex(node);
-
-                nodeRow = (nodeRow == null)? 0 : nodeRow;
-                nodeCol = (nodeCol == null)? 0 : nodeCol;
-
-                if(row == nodeRow && col == nodeCol) {
-                    return node;
-                }
-            }
-        }
-
-        return null;
-    }
-
+    // clearing off the grid
     private void clearGrid() {
         List<Node> piecesToRemove = new ArrayList<>();
         for(Node node : this.chessBoard.getChildren()) {
@@ -187,6 +211,7 @@ public class ChessUIController {
         this.chessBoard.getChildren().removeAll(piecesToRemove);
     }
 
+    // Getting piece images
     private String getPieceImage(PieceType pieceType, Color color) {
         if(color == Color.BLACK) {
             switch (pieceType) {
@@ -233,5 +258,61 @@ public class ChessUIController {
         }
 
         return "";
+    }
+
+    // Needed to read updates from socket server
+    public void parseMove(String move) {
+        String[] parts = move.split("->");
+
+        String[] start = parts[0].split(",");
+        String[] end = parts[1].split(",");
+
+        int sRow = Integer.parseInt(start[0]);
+        int sCol = Integer.parseInt(start[1]);
+
+        int eRow = Integer.parseInt(end[0]);
+        int eCol = Integer.parseInt(end[1]);
+
+        makePieceMove(sRow, sCol, eRow, eCol);
+    }
+
+    // Getting USERNAME, COLOR AND TIME
+    public void updateUserInfo() {
+        this.playerName.setText(this.client.getUserName());
+
+        String[] parts = this.client.getUserTime().split(":");
+        int time = Integer.parseInt(parts[0]);
+
+        if(this.client.getUserColor() == Color.WHITE) {
+            this.whiteClockController = new ChessClock(0, time, 0, whiteClock);
+            this.blackClockController = new ChessClock(0, time, 0, blackClock);
+
+            resignButton.setOnAction((ActionEvent e) -> {
+                try {
+                    onResignWhite();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+        } else {
+            this.whiteClockController = new ChessClock(0, time, 0, blackClock);
+            this.blackClockController = new ChessClock(0, time, 0, whiteClock);
+
+            resignButton.setOnAction((ActionEvent e) -> {
+                try {
+                    onResignBlack();
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            });
+        }
+
+        this.whiteClockController.start();
+    }
+
+    // When stalemate request is received showcase the buttons
+    public void stalemateRequest() {
+        this.allowButton.setDisable(false);
+        this.cancelButton.setDisable(false);
     }
 }
